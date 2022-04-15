@@ -18,9 +18,9 @@ import math
 
 from random import randint, random, choices
 
-"""Timmy's code starts here"""
+"""Our code starts here"""
 from likelihood_field import LikelihoodField
-"""Timmy's code ends here"""
+"""Our code ends here"""
 
 def get_yaw_from_pose(p):
     """ A helper function that takes in a Pose object (geometry_msgs) and returns yaw"""
@@ -127,7 +127,7 @@ class ParticleFilter:
         
         # TODO
 
-        """Timmy's code starts here"""
+        """Our code starts here"""
         # we should be able to find the height and width of the map (.yaml)
         # see this documentation: http://docs.ros.org/en/api/nav_msgs/html/msg/MapMetaData.html
         # for example, to find the map's width, the code should be: self.map.width
@@ -170,7 +170,7 @@ class ParticleFilter:
             # append the particle to the particle cloud
             self.particle_cloud.append(new_particle)
 
-        """Timmy's code ends here"""
+        """Our code ends here"""
         
 
         self.normalize_particles()
@@ -183,7 +183,7 @@ class ParticleFilter:
         
         # TODO
 
-        """Timmy's code starts here"""
+        """Our code starts here"""
         min_weight = 0
         max_weight = 0
         for particle in self.particle_cloud:
@@ -195,7 +195,7 @@ class ParticleFilter:
 
         for particle in self.particle_cloud:
             particle.w = (particle.w - min_weight)/(max_weight - min_weight)
-        """Timmy's code ends here"""
+        """Our code ends here"""
 
 
     def publish_particle_cloud(self):
@@ -222,10 +222,10 @@ class ParticleFilter:
 
         # TODO
 
-        """Timmy's code starts here"""
+        """Our code starts here"""
         # we want perform resample with replacement
         self.particle_cloud = choices(colors, k=len(self.particle_cloud))
-        """Timmy's code ends here"""
+        """Our code ends here"""
         
     def robot_scan_received(self, data):
 
@@ -311,16 +311,20 @@ class ParticleFilter:
 
         # TODO
 
-        """Timmy's code starts here"""
+        """Our code starts here"""
         # we need to use self.laser_pose for measurement model
 
         # I will calculate using importance weights for each particle 
         # the same calculation we did in class 5
 
-        # TODO I am not sure how the map is involved here
+        
 
         # Also, there are a total of 360 sensors
-        """Timmy's code ends here"""
+
+        # Robot actual reading - hypothetical particle reading (this is where the map come into play)
+
+        # here is also where the likelihood fields come into play.
+        """Our code ends here"""
         
         
 
@@ -331,7 +335,7 @@ class ParticleFilter:
 
         # TODO
 
-        """Timmy's code starts here"""
+        """Our code starts here"""
         curr_x = self.odom_pose.pose.position.x
         old_x = self.odom_pose_last_motion_update.pose.position.x
         curr_y = self.odom_pose.pose.position.y
@@ -356,7 +360,7 @@ class ParticleFilter:
             particle.orientation.z = particle.orientation.z + q[2]
             particle.orientation.w = particle.orientation.w + q[3]
 
-        """Timmy's code ends here"""
+        """Our code ends here"""
 
 
 
