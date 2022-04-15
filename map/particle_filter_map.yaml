@@ -1,4 +1,4 @@
-image: /home/evanwu/catkin_ws/src/intro_robo/lab_c_map_environment_using_slam/map/particle_filter_map.pgm
+image: particle_filter_map.pgm
 resolution: 0.050000
 origin: [-10.000000, -10.000000, 0.000000]
 negate: 0
