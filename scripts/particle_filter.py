@@ -16,9 +16,11 @@ import numpy as np
 from numpy.random import random_sample
 import math
 
-from random import randint, random
+from random import randint, random, choices
 
-
+"""Timmy's code starts here"""
+from likelihood_field import LikelihoodField
+"""Timmy's code ends here"""
 
 def get_yaw_from_pose(p):
     """ A helper function that takes in a Pose object (geometry_msgs) and returns yaw"""
@@ -104,7 +106,7 @@ class ParticleFilter:
         # subscribe to the lidar scan from the robot
         rospy.Subscriber(self.scan_topic, LaserScan, self.robot_scan_received)
 
-        # enable listening for and broadcasting corodinate transforms
+        # enable listening for and broadcasting coordinate transforms
         self.tf_listener = TransformListener()
         self.tf_broadcaster = TransformBroadcaster()
 
@@ -125,6 +127,51 @@ class ParticleFilter:
         
         # TODO
 
+        """Timmy's code starts here"""
+        # we should be able to find the height and width of the map (.yaml)
+        # see this documentation: http://docs.ros.org/en/api/nav_msgs/html/msg/MapMetaData.html
+        # for example, to find the map's width, the code should be: self.map.width
+
+        # we know the lower-left origin is (-10, -10)
+        # we know that the resolution is 0.05
+        # see this documentation: https://github.com/tinghanlin/particle_filter_project/blob/main/map/particle_filter_map.yaml
+        # find height and width of the map
+        resolution = 0.05
+    
+        # we will initialize (self.map.height/resolution)*(self.map.width/resolution)*360 particles of form [x, y, theta]
+        # 360 means 360 angle
+        # we can cut down the number of particles if there are too many
+
+        initial_particle_set = []
+        # +1 is to include both sides, for example if the width is 5, we want 0,1,2,3,4,5.
+        for i range(self.map.height/resolution + 1): 
+            for j range(self.map.width/resolution + 1): 
+                for k in range (360): #0-359
+                    initial_particle_set.append([i-10, j-10, k]) #adjust back to the origin
+
+        self.particle_cloud = []
+
+        for i in range(len(initial_particle_set)):
+            p = Pose()
+            p.position = Point()
+            p.position.x = initial_particle_set[i][0]
+            p.position.y = initial_particle_set[i][1]
+            p.position.z = 0
+            p.orientation = Quaternion()
+            q = quaternion_from_euler(0.0, 0.0, initial_particle_set[i][2]) # not sure if we should change this or not lol
+            p.orientation.x = q[0]
+            p.orientation.y = q[1]
+            p.orientation.z = q[2]
+            p.orientation.w = q[3]
+
+            # initialize the new particle, where all will have the same weight (1.0)
+            new_particle = Particle(p, 1.0)
+
+            # append the particle to the particle cloud
+            self.particle_cloud.append(new_particle)
+
+        """Timmy's code ends here"""
+        
 
         self.normalize_particles()
 
@@ -136,6 +183,19 @@ class ParticleFilter:
         
         # TODO
 
+        """Timmy's code starts here"""
+        min_weight = 0
+        max_weight = 0
+        for particle in self.particle_cloud:
+            if particle.w < min_weight: 
+                min_weight = particle.w
+
+            if particle.w > max_weight: 
+                max_weight = particle.w
+
+        for particle in self.particle_cloud:
+            particle.w = (particle.w - min_weight)/(max_weight - min_weight)
+        """Timmy's code ends here"""
 
 
     def publish_particle_cloud(self):
@@ -150,8 +210,6 @@ class ParticleFilter:
         self.particles_pub.publish(particle_cloud_pose_array)
 
 
-
-
     def publish_estimated_robot_pose(self):
 
         robot_pose_estimate_stamped = PoseStamped()
@@ -160,13 +218,15 @@ class ParticleFilter:
         self.robot_estimate_pub.publish(robot_pose_estimate_stamped)
 
 
-
     def resample_particles(self):
 
         # TODO
 
-
-
+        """Timmy's code starts here"""
+        # we want perform resample with replacement
+        self.particle_cloud = choices(colors, k=len(self.particle_cloud))
+        """Timmy's code ends here"""
+        
     def robot_scan_received(self, data):
 
         # wait until initialization is complete
@@ -245,12 +305,23 @@ class ParticleFilter:
         # TODO
 
 
+
     
     def update_particle_weights_with_measurement_model(self, data):
 
         # TODO
 
+        """Timmy's code starts here"""
+        # we need to use self.laser_pose for measurement model
 
+        # I will calculate using importance weights for each particle 
+        # the same calculation we did in class 5
+
+        # TODO I am not sure how the map is involved here
+
+        # Also, there are a total of 360 sensors
+        """Timmy's code ends here"""
+        
         
 
     def update_particles_with_motion_model(self):
@@ -260,6 +331,33 @@ class ParticleFilter:
 
         # TODO
 
+        """Timmy's code starts here"""
+        curr_x = self.odom_pose.pose.position.x
+        old_x = self.odom_pose_last_motion_update.pose.position.x
+        curr_y = self.odom_pose.pose.position.y
+        old_y = self.odom_pose_last_motion_update.pose.position.y
+        curr_yaw = get_yaw_from_pose(self.odom_pose.pose)
+        old_yaw = get_yaw_from_pose(self.odom_pose_last_motion_update.pose)
+
+        x_diff = curr_x - old_x
+        y_diff = curr_y - old_y
+        #I think yaw is referring to the theta of robot's location [x, y, theta]
+        yaw_diff = curr_yaw - old_yaw
+
+        for particle in range(len(particle_cloud)):
+            
+            particle.position.x = particle.position.x + x_diff
+            particle.position.y = particle.position.y + y_diff
+            particle.position.z = 0 # not sure how to update this # TODO
+            
+            q = quaternion_from_euler(0.0, 0.0, yaw_diff]) # not sure if we should change this or not lol
+            particle.orientation.x = particle.orientation.x + q[0]
+            particle.orientation.y = particle.orientation.y + q[1]
+            particle.orientation.z = particle.orientation.z + q[2]
+            particle.orientation.w = particle.orientation.w + q[3]
+
+        """Timmy's code ends here"""
+
 
 
 if __name__=="__main__":
@@ -268,12 +366,3 @@ if __name__=="__main__":
     pf = ParticleFilter()
 
     rospy.spin()
-
-
-
-
-
-
-
-
-
