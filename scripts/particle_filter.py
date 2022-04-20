@@ -39,7 +39,8 @@ def draw_random_sample(choices, n, p):
     We recommend that you fill in this function using random_sample.
     """
     # TODO
-    return np.random.choice(choices, size = n, replace = True, p = p)
+    
+    return choices[np.random.choice(n, size = n, replace = True, p = p), :]
 
 
 def compute_prob_zero_centered_gaussian(dist, sd):
@@ -150,8 +151,8 @@ class ParticleFilter:
 
         initial_particle_set = []
         # +1 is to include both sides, for example if the width is 5, we want 0,1,2,3,4,5.
-        for i in range(self.map.info.height/resolution + 1): 
-            for j in range(self.map.info.width/resolution + 1): 
+        for i in range(int(self.map.info.height/resolution + 1)): 
+            for j in range(int(self.map.info.width/resolution + 1)): 
                 for k in range (360): #0-359
                     initial_particle_set.append([i-10, j-10, k]) #adjust back to the origin
 
