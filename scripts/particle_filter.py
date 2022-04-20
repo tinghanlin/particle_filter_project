@@ -169,11 +169,11 @@ class ParticleFilter:
         for i in range(len(random_particle_set)):
             p = Pose()
             p.position = Point()
-            p.position.x = initial_particle_set[i][0]
-            p.position.y = initial_particle_set[i][1]
+            p.position.x = random_particle_set[i][0]
+            p.position.y = random_particle_set[i][1]
             p.position.z = 0
             p.orientation = Quaternion()
-            q = quaternion_from_euler(0.0, 0.0, initial_particle_set[i][2]) # not sure if we should change this or not lol
+            q = quaternion_from_euler(0.0, 0.0, random_particle_set[i][2]) # not sure if we should change this or not lol
             p.orientation.x = q[0]
             p.orientation.y = q[1]
             p.orientation.z = q[2]
