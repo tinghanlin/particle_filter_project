@@ -374,8 +374,8 @@ class ParticleFilter:
                     # x_zkt = x + x_k,sens * cos(theta) - y_k,sens * sin(theta) + z_kt * cos(theta + theta_k,sens)
                     # y_zkt = y + y_k,sens * cos(theta) - x_k,sens * sin(theta) + z_kt * sin(theta + theta_k,sens)
                     # currently assuming x_k,sens, y_ksens, and theta_k,sens = 0 i.e. sensor at robot center
-                    x_zkt = p.position.x + data[d] * np.cos(theta + d)
-                    y_zkt = p.position.y + data[d] * np.sin(theta + d)
+                    x_zkt = p.position.x + data[d] * np.cos(theta + d) #do we need d here?
+                    y_zkt = p.position.y + data[d] * np.sin(theta + d) #do we need d here?
                     dist = self.likelihood_field.get_closest_obstacle_distance(x_zkt, y_zkt)
                     p.weight = p.weight * compute_prob_zero_centered_gaussian(dist, 0.1)
 
@@ -403,15 +403,18 @@ class ParticleFilter:
         yaw_diff = curr_yaw[2] - old_yaw[2]
 
         for p in self.particle_cloud:
-            # This is not correct as we need to rotate before adjusting distance
-            p.position.x = p.position.x + x_diff
-            p.position.y = p.position.y + y_diff
+            # We need to rotate cw by phi = diff btwn robot and particle orientation to adjust distance
+            phi = get_yaw_from_pose(p.pose)[2]
+            x_diff = np.sin(phi) * y_diff - np.cos(phi) * x_diff
+            y_diff = -np.sin(phi) * x_diff - np.cos(phi) * y_diff
+            p.pose.position.x += x_diff
+            p.pose.position.y += y_diff
             
             q = quaternion_from_euler(0.0, 0.0, yaw_diff) 
-            p.orientation.x = p.orientation.x + q[0]
-            p.orientation.y = p.orientation.y + q[1]
-            p.orientation.z = p.orientation.z + q[2]
-            p.orientation.w = p.orientation.w + q[3]
+            p.pose.orientation.x += q[0]
+            p.pose.orientation.y += q[1]
+            p.pose.orientation.z += q[2]
+            p.pose.orientation.w += q[3]
 
         """Our code ends here"""
 
