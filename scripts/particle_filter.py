@@ -157,7 +157,7 @@ class ParticleFilter:
 
         self.particle_cloud = []
 
-        random_particle_set = draw_random_sample(initial_particle_set, self.num_particles, 1):
+        random_particle_set = draw_random_sample(initial_particle_set, self.num_particles, 1)
             
         for i in range(len(random_particle_set)):
             p = Pose()
