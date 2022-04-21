@@ -90,7 +90,7 @@ class ParticleFilter:
         self.likelihood_field = LikelihoodField()
 
         # the number of particles used in the particle filter
-        self.num_particles = 10000
+        self.num_particles = 100
 
         # initialize the particle cloud array
         self.particle_cloud = []
@@ -179,7 +179,7 @@ class ParticleFilter:
             p.orientation.w = q[3]
 
             # initialize the new particle, where all will have the same weight (1.0)
-            new_particle = Particle(p, 1.0)
+            new_particle = Particle(p, 1/(self.num_particles))
 
             # append the particle to the particle cloud
             self.particle_cloud.append(new_particle)
@@ -199,18 +199,13 @@ class ParticleFilter:
         # TODO
 
         """Our code starts here"""
-        # Not sure this is correct
-        min_weight = 0
-        max_weight = 0
+        weight_sum = 0
         for particle in self.particle_cloud:
-            if particle.w < min_weight: 
-                min_weight = particle.w
-
-            if particle.w > max_weight: 
-                max_weight = particle.w
+            weight_sum += particle.w
 
         for particle in self.particle_cloud:
-            particle.w = (particle.w - min_weight)/(max_weight - min_weight)
+            particle.w /= weight_sum
+
         """Our code ends here"""
 
 
@@ -287,7 +282,7 @@ class ParticleFilter:
         if self.particle_cloud:
 
             # check to see if we've moved far enough to perform an update
-
+            print("check point 1")
             curr_x = self.odom_pose.pose.position.x
             old_x = self.odom_pose_last_motion_update.pose.position.x
             curr_y = self.odom_pose.pose.position.y
@@ -298,7 +293,7 @@ class ParticleFilter:
             if (np.abs(curr_x - old_x) > self.lin_mvmt_threshold or 
                 np.abs(curr_y - old_y) > self.lin_mvmt_threshold or
                 np.abs(curr_yaw - old_yaw) > self.ang_mvmt_threshold):
-
+                print("check point 2")
                 # This is where the main logic of the particle filter is carried out
 
                 self.update_particles_with_motion_model()
@@ -372,19 +367,19 @@ class ParticleFilter:
 
             # for each measurement in a certain direction
             for d in cardinal_directions_idxs:
-                if data[d] != z_max:
+                if data.ranges[d] != z_max:
                     # get angular.z by converting quaternion to yaw
                     theta = euler_from_quaternion([
-                        p.orientation.x,
-                        p.orientation.y,
-                        p.orientation.z,
-                        p.orientation.w])[2]
+                        p.pose.orientation.x,
+                        p.pose.orientation.y,
+                        p.pose.orientation.z,
+                        p.pose.orientation.w])[2]
 
                     # x_zkt = x + x_k,sens * cos(theta) - y_k,sens * sin(theta) + z_kt * cos(theta + theta_k,sens)
                     # y_zkt = y + y_k,sens * cos(theta) - x_k,sens * sin(theta) + z_kt * sin(theta + theta_k,sens)
                     # currently assuming x_k,sens, y_ksens, and theta_k,sens = 0 i.e. sensor at robot center
-                    x_zkt = p.position.x + data[d] * np.cos(theta + d) #do we need d here?
-                    y_zkt = p.position.y + data[d] * np.sin(theta + d) #do we need d here?
+                    x_zkt = p.pose.position.x + data.ranges[d] * np.cos(theta + d) #do we need d here?
+                    y_zkt = p.pose.position.y + data.ranges[d] * np.sin(theta + d) #do we need d here?
                     dist = self.likelihood_field.get_closest_obstacle_distance(x_zkt, y_zkt)
                     p.weight = p.weight * compute_prob_zero_centered_gaussian(dist, 0.1)
 
@@ -409,13 +404,13 @@ class ParticleFilter:
         x_diff = curr_x - old_x
         y_diff = curr_y - old_y
         #I think yaw is referring to the theta of robot's location [x, y, theta]
-        print("curr_raw: ", curr_yaw)
-        print("old_yaw:", old_yaw)
-        yaw_diff = curr_yaw[2] - old_yaw[2]
+        #print("curr_raw: ", curr_yaw)
+        #print("old_yaw:", old_yaw)
+        yaw_diff = curr_yaw - old_yaw
 
         for p in self.particle_cloud:
             # We need to rotate cw by phi = diff btwn robot and particle orientation to adjust distance
-            phi = get_yaw_from_pose(p.pose)[2]
+            phi = get_yaw_from_pose(p.pose)
             x_diff = np.sin(phi) * y_diff - np.cos(phi) * x_diff
             y_diff = -np.sin(phi) * x_diff - np.cos(phi) * y_diff
             p.pose.position.x += x_diff
