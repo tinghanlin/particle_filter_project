@@ -3,6 +3,29 @@
 ## The names of your team members
 Timmy (Timmy) Lin and Evan Wu
 
+## Write Up
+
+### Objectives description
+### High-level description
+### Code Location and Functions/Code Description in Each Step
+#### Initialization of particle cloud
+#### Movement Model
+#### Measurement Model
+#### Resampling
+#### Incorporation of Noise
+#### Updating Estimated Robot Pose
+#### Optimization Of Parameters
+
+### Challenges
+During the initial stage of our project, we had difficulty visualizing the particles on rviz. It turnned out that the reason was because we didn't ensure the publishers and subscribers to be set up before we called the initialize_particle_cloud function. After we implemented sleep, we were able to see the particles shown on rviz.
+
+### Future Work 
+In the future, we can think more about how to initialize the particle cloud strictly within the boundaries of the maze. In our current implementation, some of the particles are initialized a little bit outside of the wall of the maze.
+
+
+### Takeaways
+
+## Implementation Plan
 ## A 1-2 sentence description of how your team plans to implement each of the following components of the particle filter localization as well as a 1-2 sentence description of how you will test each component:
  
 ### How you will initialize your particle cloud (initialize_particle_cloud)?
