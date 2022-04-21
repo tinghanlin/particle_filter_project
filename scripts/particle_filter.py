@@ -141,9 +141,10 @@ class ParticleFilter:
         # TODO
 
         """Our code starts here"""
+        print("print", self.map.info.width)
         # we should be able to find the height and width of the map (.yaml)
         # see this documentation: http://docs.ros.org/en/api/nav_msgs/html/msg/MapMetaData.html
-        # for example, to find the map's width, the code should be: self.map.width
+        # for example, to find the map's width, the code should be: self.map.info.width, both height and width are 384
 
         # we know the lower-left origin is (-10, -10)
         # we know that the resolution is 0.05
@@ -156,15 +157,28 @@ class ParticleFilter:
         # we can cut down the number of particles if there are too many
 
         initial_particle_set = []
+  
         # +1 is to include both sides, for example if the width is 5, we want 0,1,2,3,4,5.
-        for i in range(int(self.map.info.height/resolution + 1)): 
-            for j in range(int(self.map.info.width/resolution + 1)): 
-                for k in range (360): #0-359
-                    initial_particle_set.append([i-10, j-10, k]) #adjust back to the origin
+        
+        
+        # for i in range(int(resolution + 1)): 
+        #     for j in range(int(resolution + 1)): 
+        #         for k in range (360): #0-359
+        #             #print("i",i)
+        #             # print("j",j)
+        #             # print("k",k)
+        #             initial_particle_set.append([i-10, j-10, k]) #adjust back to the origin
 
         self.particle_cloud = []
 
-        random_particle_set = draw_random_sample(np.array(initial_particle_set), 3, -1) #self.num_particles
+        #random_particle_set = draw_random_sample(np.array(initial_particle_set), 10000, -1) #self.num_particles
+        
+        random_particle_set = []
+        for i in range(384): 
+            for j in range(384): 
+
+                random_particle_set.append([i-10, j-10, 0])
+
         for i in random_particle_set:
             print(i)
         for i in range(len(random_particle_set)):
@@ -411,6 +425,8 @@ class ParticleFilter:
         x_diff = curr_x - old_x
         y_diff = curr_y - old_y
         #I think yaw is referring to the theta of robot's location [x, y, theta]
+        print("curr_raw: ", curr_yaw)
+        print("old_yaw:", old_yaw)
         yaw_diff = curr_yaw[2] - old_yaw[2]
 
         for p in self.particle_cloud:
