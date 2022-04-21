@@ -174,10 +174,10 @@ class ParticleFilter:
         #random_particle_set = draw_random_sample(np.array(initial_particle_set), 10000, -1) #self.num_particles
         
         random_particle_set = []
-        for i in range(20): 
-            for j in range(20): 
+        for i in range(5): 
+            for j in range(6): 
 
-                random_particle_set.append([i-10, j-10, 0])
+                random_particle_set.append([i-1, j-1, 0])
 
         # for i in random_particle_set:
         #     print(i)
