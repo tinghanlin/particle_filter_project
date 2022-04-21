@@ -141,43 +141,27 @@ class ParticleFilter:
         # TODO
 
         """Our code starts here"""
-        print("print", self.map.info.width)
         # we should be able to find the height and width of the map (.yaml)
         # see this documentation: http://docs.ros.org/en/api/nav_msgs/html/msg/MapMetaData.html
-        # for example, to find the map's width, the code should be: self.map.info.width, both height and width are 384
+        # for example, to find the map's width, the code should be: self.map.info.width, which is 384
 
-        # we know the lower-left origin is (-10, -10)
+        # we know the lower-right origin is (-10, -10)
         # we know that the resolution is 0.05
         # see this documentation: https://github.com/tinghanlin/particle_filter_project/blob/main/map/particle_filter_map.yaml
-        # find height and width of the map
-        resolution = 0.05
-    
-        # we will initialize (self.map.height/resolution)*(self.map.width/resolution)*360 particles of form [x, y, theta]
-        # 360 means 360 angle
-        # we can cut down the number of particles if there are too many
-
-        initial_particle_set = []
-  
-        # +1 is to include both sides, for example if the width is 5, we want 0,1,2,3,4,5.
-        
-        
-        # for i in range(int(resolution + 1)): 
-        #     for j in range(int(resolution + 1)): 
-        #         for k in range (360): #0-359
-        #             #print("i",i)
-        #             # print("j",j)
-        #             # print("k",k)
-        #             initial_particle_set.append([i-10, j-10, k]) #adjust back to the origin
+       
+        # using the resolution, height, and width, we are able to locate the maze in our map
+        # we draw particles from 0-5 for x, 0-6 for y, and 0-359 for orientation
 
         self.particle_cloud = []
-
-        #random_particle_set = draw_random_sample(np.array(initial_particle_set), 10000, -1) #self.num_particles
         
-        random_particle_set = []
-        for i in range(5): 
-            for j in range(6): 
+        rand_x=choices(range(0, 500), k=self.num_particles)
+        rand_y=choices(range(0, 600), k=self.num_particles)
+        rand_orientation=choices(range(0, 360), k=self.num_particles)
 
-                random_particle_set.append([i-1, j-1, 0])
+        random_particle_set = []
+
+        for i in range(self.num_particles):
+            random_particle_set.append([rand_x[i]/100,rand_y[i]/100,rand_orientation[i]])
 
         # for i in random_particle_set:
         #     print(i)
