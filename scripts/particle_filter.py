@@ -161,7 +161,7 @@ class ParticleFilter:
         random_particle_set = []
 
         for i in range(self.num_particles):
-            random_particle_set.append([rand_x[i]/100,rand_y[i]/100,rand_orientation[i]])
+            random_particle_set.append([(rand_x[i]/100)-1,(rand_y[i]/100)-1,rand_orientation[i]])
 
         # for i in random_particle_set:
         #     print(i)
