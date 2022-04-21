@@ -165,7 +165,8 @@ class ParticleFilter:
         self.particle_cloud = []
 
         random_particle_set = draw_random_sample(np.array(initial_particle_set), 3, -1) #self.num_particles
-            
+        for i in random_particle_set:
+            print(i)
         for i in range(len(random_particle_set)):
             p = Pose()
             p.position = Point()
@@ -184,8 +185,7 @@ class ParticleFilter:
 
             # append the particle to the particle cloud
             self.particle_cloud.append(new_particle)
-            for p in self.particle_cloud:
-                print(p)
+            
 
         """Our code ends here"""
         
