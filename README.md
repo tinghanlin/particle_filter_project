@@ -1,7 +1,7 @@
 # particle_filter_project
 
 ## The names of your team members
-Timmy (Timmy) Lin and Evan Wu
+Ting-Han (Timmy) Lin and Evan Wu
 
 ## Write Up
 
