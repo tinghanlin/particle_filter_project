@@ -6,9 +6,11 @@ Timmy (Timmy) Lin and Evan Wu
 ## Write Up
 
 ### Objectives description
-### High-level description
+In the particle filter localization project, our objective is to implement Monte Carlo localization to help a turtlebot find its position on the maze map that is made by us using Simultaneous Localization and Mapping (SLAM). At the beginning of our project, we would initialize a set of particles with randomized locations and orientations on the map. As time goes on, the particles' locations would be updated based on the robot's movement, and particles that have similar hypothetical laser scan to that of the robot would remain and converge to the position of the robot, which shows that the robot now knows its location on the map.
+
+### High-level Description
 ### Code Location and Functions/Code Description in Each Step
-#### Initialization of particle cloud
+#### Initialization of Particle Cloud
 #### Movement Model
 #### Measurement Model
 #### Resampling
