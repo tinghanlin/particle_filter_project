@@ -184,7 +184,7 @@ class ParticleFilter:
 
             # append the particle to the particle cloud
             self.particle_cloud.append(new_particle)
-            for p in particle_cloud:
+            for p in self.particle_cloud:
                 print(p)
 
         """Our code ends here"""
