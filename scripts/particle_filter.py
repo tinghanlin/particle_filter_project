@@ -34,19 +34,19 @@ def get_yaw_from_pose(p):
     return yaw
 
 
-def draw_random_sample(choices, n, p):
+def draw_random_sample(a_2d_array, n, p):
     """ Draws a random sample of n elements from a given list of choices and their specified probabilities.
     We recommend that you fill in this function using random_sample.
     """
     # TODO
     
-    # number_of_rows = a_2d_array.shape[0]
+    number_of_rows = a_2d_array.shape[0]
     
-    # random_indices = np.random.choice(number_of_rows, size=n, replace=True, p = p)
-    # random_rows = a_2d_array[random_indices, :]
-    # return random_rows
+    random_indices = np.random.choice(number_of_rows, size=n, replace=True, p = p)
+    random_rows = a_2d_array[random_indices, :]
+    return random_rows
 
-    return np.random.choice(choices, size = n, replace = True, p = p)
+    #return np.random.choice(choices, size = n, replace = True, p = p)
 
 
 def compute_prob_zero_centered_gaussian(dist, sd):
@@ -184,6 +184,7 @@ class ParticleFilter:
             # append the particle to the particle cloud
             self.particle_cloud.append(new_particle)
             
+        self.particle_cloud = np.array(self.particle_cloud)
 
         """Our code ends here"""
         
@@ -240,7 +241,7 @@ class ParticleFilter:
             weights.append(p.w)
 
 
-        self.particle_cloud = draw_random_sample(self.particle_cloud, self.num_particles, weights)
+        self.particle_cloud = draw_random_sample(np.array(self.particle_cloud), self.num_particles, weights)
         """Our code ends here"""
         
     def robot_scan_received(self, data):
