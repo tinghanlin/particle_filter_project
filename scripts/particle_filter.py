@@ -19,7 +19,7 @@ import math
 from random import randint, random, choices
 
 from likelihood_field import LikelihoodField
-
+import time
 
 def get_yaw_from_pose(p):
     """ A helper function that takes in a Pose object (geometry_msgs) and returns yaw"""
@@ -123,7 +123,7 @@ class ParticleFilter:
         self.tf_listener = TransformListener()
         self.tf_broadcaster = TransformBroadcaster()
 
-
+        time.sleep(3)
         # intialize the particle cloud
         self.initialize_particle_cloud()
 
@@ -174,13 +174,13 @@ class ParticleFilter:
         #random_particle_set = draw_random_sample(np.array(initial_particle_set), 10000, -1) #self.num_particles
         
         random_particle_set = []
-        for i in range(384): 
-            for j in range(384): 
+        for i in range(200): 
+            for j in range(200): 
 
                 random_particle_set.append([i-10, j-10, 0])
 
-        for i in random_particle_set:
-            print(i)
+        # for i in random_particle_set:
+        #     print(i)
         for i in range(len(random_particle_set)):
             p = Pose()
             p.position = Point()
