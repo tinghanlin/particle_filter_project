@@ -39,11 +39,17 @@ def draw_random_sample(a_2d_array, n, p):
     We recommend that you fill in this function using random_sample.
     """
     # TODO
-    
+    print(type(a_2d_array))
+    print(len(a_2d_array))
+    # for i in a_2d_array:
+    #     print(i.shape)
     number_of_rows = a_2d_array.shape[0]
     
     random_indices = np.random.choice(number_of_rows, size=n, replace=True, p = p)
-    random_rows = a_2d_array[random_indices, :]
+    print("length of indices",len(random_indices))
+    
+    random_rows = a_2d_array[random_indices]
+    
     return random_rows
 
     #return np.random.choice(choices, size = n, replace = True, p = p)
@@ -90,7 +96,7 @@ class ParticleFilter:
         self.likelihood_field = LikelihoodField()
 
         # the number of particles used in the particle filter
-        self.num_particles = 100
+        self.num_particles = 1000
 
         # initialize the particle cloud array
         self.particle_cloud = []
@@ -281,7 +287,7 @@ class ParticleFilter:
             self.odom_pose_last_motion_update = self.odom_pose
             return
 
-        if self.particle_cloud:
+        if len(self.particle_cloud) > 0:
 
             # check to see if we've moved far enough to perform an update
             print("check point 1")
@@ -320,7 +326,13 @@ class ParticleFilter:
         # TODO
         ''' our code here'''        
         # Initialize sum for all Pose parameters
-        xp_mean, yp_mean, zp_mean, xo_mean, yo_mean, zo_mean, wo_mean = 0
+        xp_mean = 0
+        yp_mean = 0
+        zp_mean = 0
+        xo_mean = 0
+        yo_mean = 0
+        zo_mean = 0
+        wo_mean = 0
 
         # Sum parameters for all particles in our cloud
         for p in self.particle_cloud:
