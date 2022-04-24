@@ -411,8 +411,8 @@ class ParticleFilter:
         for p in self.particle_cloud:
             # We need to rotate cw by phi = diff btwn robot and particle orientation to adjust distance
             phi = get_yaw_from_pose(p.pose)
-            x_diff = np.sin(phi) * y_diff - np.cos(phi) * x_diff
-            y_diff = -np.sin(phi) * x_diff - np.cos(phi) * y_diff
+            x_diff = np.cos(phi) * x_diff + np.sin(phi) * y_diff  # we need phi to be radian, so check it!
+            y_diff = -np.sin(phi) * x_diff + np.cos(phi) * y_diff
             p.pose.position.x += x_diff
             p.pose.position.y += y_diff
             
