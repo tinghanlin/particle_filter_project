@@ -105,8 +105,8 @@ class ParticleFilter:
         self.robot_estimate = Pose()
 
         # set threshold values for linear and angular movement before we preform an update
-        self.lin_mvmt_threshold = 0.2        
-        self.ang_mvmt_threshold = (np.pi / 6)
+        self.lin_mvmt_threshold = 0.05        
+        self.ang_mvmt_threshold = (np.pi / 10)
 
         self.odom_pose_last_motion_update = None
 
