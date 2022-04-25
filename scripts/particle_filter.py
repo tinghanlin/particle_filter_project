@@ -371,8 +371,8 @@ class ParticleFilter:
                 # x_zkt = x + x_k,sens * cos(theta) - y_k,sens * sin(theta) + z_kt * cos(theta + theta_k,sens)
                 # y_zkt = y + y_k,sens * cos(theta) - x_k,sens * sin(theta) + z_kt * sin(theta + theta_k,sens)
                 # currently assuming x_k,sens, y_ksens, and theta_k,sens = 0 i.e. sensor at robot center
-                x_zkt = p.pose.position.x + data.ranges[d] * np.cos(theta + (d * np.pi/180)) 
-                y_zkt = p.pose.position.y + data.ranges[d] * np.sin(theta + (d * np.pi/180)) 
+                x_zkt = p.pose.position.x + m * np.cos(theta + (d * np.pi/180)) 
+                y_zkt = p.pose.position.y + m * np.sin(theta + (d * np.pi/180)) 
                 dist = self.likelihood_field.get_closest_obstacle_distance(x_zkt, y_zkt)
                 
                 # handle NaN dist here 
