@@ -306,10 +306,10 @@ class ParticleFilter:
 
                 self.resample_particles()
 
-                #self.update_estimated_robot_pose()
+                self.update_estimated_robot_pose()
 
                 self.publish_particle_cloud()
-                #self.publish_estimated_robot_pose()
+                self.publish_estimated_robot_pose()
 
                 self.odom_pose_last_motion_update = self.odom_pose
 
@@ -320,7 +320,10 @@ class ParticleFilter:
         ''' our code here'''        
         print("update_estimated_robot_pose")
         # Initialize sum for all Pose parameters
-        xp_mean, yp_mean, x_angle, y_angle = 0.0
+        xp_mean = 0.0
+        yp_mean = 0.0
+        x_angle = 0.0
+        y_angle = 0.0
 
         # Sum parameters for all particles in our cloud
         # Calculate the average angle as arctan(sum(sin(angles)/cos(angles)))
