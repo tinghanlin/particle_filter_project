@@ -142,50 +142,43 @@ class ParticleFilter:
         
         # TODO
 
-        """Our code starts here"""
-        # we should be able to find the height and width of the map (.yaml)
-        # see this documentation: http://docs.ros.org/en/api/nav_msgs/html/msg/MapMetaData.html
-        # for example, to find the map's width, the code should be: self.map.info.width, which is 384
-
-        # we know the lower-right origin is (-10, -10)
-        # we know that the resolution is 0.05
-        # see this documentation: https://github.com/tinghanlin/particle_filter_project/blob/main/map/particle_filter_map.yaml
-       
-        # using the resolution, height, and width, we are able to locate the maze in our map
-        # we draw particles from 0-5 for x, 0-6 for y, and 0-359 for orientation
+        """Our code starts here"""      
+        indices = []
         
-        rand_x=choices(range(0, 500), k=self.num_particles)
-        rand_y=choices(range(0, 500), k=self.num_particles)
-        rand_orientation=choices(range(0, 360), k=self.num_particles)
+        # for all spaces in occupancy grid return unoccupied spaces
+        for i, occ in enumerate(self.map.data):
+            if occ == 0: # unoccupied = 0, can set free_thresh in .yaml to increase
+                indices.append(i)
 
-        random_particle_set = []
+        indices = np.array(indices)
 
+        # from row major cell indices, get x and y pose coordinates
+        x_coords = (indices % self.map.width) * self.map.info.resolution + self.map.info.origin.x
+        y_coords = (indices % self.map.height) * self.map.info.resolution + self.map.info.origin.y
+        
+        # sample x, y, and theta uniformly
+        xs = np.random.choice(x_coords, size = self.num_particles)
+        ys = np.random.choice(y_coords, size = self.num_particles)
+        thetas = np.random.choice(range(360), size = self.num_particles)
+
+        # append particle to cloud
         for i in range(self.num_particles):
-            random_particle_set.append([(rand_x[i]/100)-1,(rand_y[i]/100)-1,rand_orientation[i]])
-
-        # for i in random_particle_set:
-        #     print(i)
-        for i in range(len(random_particle_set)):
             p = Pose()
+
             p.position = Point()
-            p.position.x = random_particle_set[i][0]
-            p.position.y = random_particle_set[i][1]
-            p.position.z = 0
+            p.position.x = xs[i]
+            p.position.y = ys[i]
+
             p.orientation = Quaternion()
-            q = quaternion_from_euler(0.0, 0.0, random_particle_set[i][2]) # not sure if we should change this or not lol
+            q = quaternion_from_euler(0.0, 0.0, thetas[i]) 
             p.orientation.x = q[0]
             p.orientation.y = q[1]
             p.orientation.z = q[2]
             p.orientation.w = q[3]
 
-            # initialize the new particle, where all will have the same weight (1.0)
-            new_particle = Particle(p, 1/(self.num_particles))
-
-            # append the particle to the particle cloud
-            self.particle_cloud.append(new_particle)
+            self.particle_cloud.append(Particle(p, 1/(self.num_particles)))
             
         self.particle_cloud = np.array(self.particle_cloud)
-
         """Our code ends here"""
         
 
