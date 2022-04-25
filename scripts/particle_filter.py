@@ -88,7 +88,7 @@ class ParticleFilter:
         self.likelihood_field = LikelihoodField()
 
         # the number of particles used in the particle filter
-        self.num_particles = 200
+        self.num_particles = 3000
 
         # initialize the particle cloud array
         self.particle_cloud = []
@@ -137,22 +137,26 @@ class ParticleFilter:
     def initialize_particle_cloud(self):
 
         """Our code starts here"""      
-        indices = []
+        # indices = []
         
-        # for all spaces in occupancy grid return unoccupied spaces
-        for i, occ in enumerate(self.map.data):
-            if occ == 0: # unoccupied = 0, can set free_thresh in .yaml to increase
-                indices.append(i)
+        # # for all spaces in occupancy grid return unoccupied spaces
+        # for i, occ in enumerate(self.map.data):
+        #     if occ == 0: # unoccupied = 0, can set free_thresh in .yaml to increase
+        #         indices.append(i)
 
-        indices = np.array(indices)
+        # indices = np.array(indices)
 
-        # from row major cell indices, get x and y pose coordinates
-        x_coords = (indices % self.map.info.width) * self.map.info.resolution + self.map.info.origin.position.x
-        y_coords = (indices % self.map.info.height) * self.map.info.resolution + self.map.info.origin.position.y
+        # # from row major cell indices, get x and y pose coordinates
+        # x_coords = (indices % self.map.info.width) * self.map.info.resolution + self.map.info.origin.position.x
+        # y_coords = (indices % self.map.info.height) * self.map.info.resolution + self.map.info.origin.position.y
         
+        ((x_lower, x_upper), (y_lower, y_upper)) = self.likelihood_field.get_obstacle_bounding_box()
+
         # sample x, y, and theta uniformly
-        xs = np.random.choice(x_coords, size = self.num_particles)
-        ys = np.random.choice(y_coords, size = self.num_particles)
+        # xs = np.random.choice(range(x_lower, x_upper), size = self.num_particles)
+        # ys = np.random.choice(range(y_lower, y_upper), size = self.num_particles)
+        xs = (x_upper - x_lower) * random_sample(size = self.num_particles) + x_lower
+        ys = (y_upper - y_lower) * random_sample(size = self.num_particles) + y_lower
         thetas = np.random.choice(range(360), size = self.num_particles)
 
         # append particle to cloud
@@ -380,9 +384,9 @@ class ParticleFilter:
                 
                 # handle NaN dist here 
                 if np.isfinite(dist) == False:
-                    dist = 0.0
+                    dist = 0.01
 
-                p.weight *= compute_prob_zero_centered_gaussian(dist, 0.1)
+                p.weight *= compute_prob_zero_centered_gaussian(dist, 0.01)
         """Our code ends here"""
         
 
@@ -427,8 +431,8 @@ class ParticleFilter:
 
             # p.pose.position.x += n_dist * np.cos(p_yaw)
             # p.pose.position.y += n_dist * np.sin(p_yaw)
-            p.pose.position.x += dist * np.cos(p_yaw) + random.gauss(0, 0.1)
-            p.pose.position.y += dist * np.sin(p_yaw) + random.gauss(0, 0.1)
+            p.pose.position.x += dist * np.cos(p_yaw) + random.gauss(0, 0.01)
+            p.pose.position.y += dist * np.sin(p_yaw) + random.gauss(0, 0.01)
 
             #p_yaw += n_rot2
             p_yaw += rot2+ random.gauss(0, 0.01)
