@@ -38,9 +38,9 @@ def draw_random_sample(n, p):
     """ Draws a random sample of n elements from a given list of choices and their specified probabilities.
     We recommend that you fill in this function using random_sample.
     """
+
     # n = num_particles, p = weights
-    # get indices of particles to choose based on weights
-    #indices = np.random.choice(range(n), size = n, replace = True, p = p)
+    # get indices of particles to choose based on weights    
     
     indices = random.choices(range(n), weights = p, k = n)
     return indices
@@ -135,8 +135,6 @@ class ParticleFilter:
     
 
     def initialize_particle_cloud(self):
-        
-        # TODO
 
         """Our code starts here"""      
         indices = []
@@ -183,8 +181,6 @@ class ParticleFilter:
 
     def normalize_particles(self):
         # make all the particle weights sum to 1.0
-        
-        # TODO
 
         """Our code starts here"""
         print("normalize_particles")
@@ -228,8 +224,6 @@ class ParticleFilter:
 
 
     def resample_particles(self):
-
-        # TODO
 
         """Our code starts here"""
         # resample of particle cloud with replacement based on weights
@@ -322,48 +316,40 @@ class ParticleFilter:
 
     def update_estimated_robot_pose(self):
         # based on the particles within the particle cloud, update the robot pose estimate
-        
-        # TODO
+
         ''' our code here'''        
         print("update_estimated_robot_pose")
         # Initialize sum for all Pose parameters
-        xp_mean = 0.0
-        yp_mean = 0.0
-        zp_mean = 0.0
-        zo_mean = 0.0
+        xp_mean, yp_mean, x_angle, y_angle = 0.0
 
         # Sum parameters for all particles in our cloud
+        # Calculate the average angle as arctan(sum(sin(angles)/cos(angles)))
         for p in self.particle_cloud:
             xp_mean += p.pose.position.x
             yp_mean += p.pose.position.y
-            zp_mean += p.pose.position.z
-
-            zo_mean += get_yaw_from_pose(p.pose)
+            x_angle += np.cos(get_yaw_from_pose(p.pose))
+            y_angle += np.sin(get_yaw_from_pose(p.pose))
             
         # Calculate the averages
         n = len(self.particle_cloud)
         xp_mean /= n
         yp_mean /= n
-        zp_mean /= n
-        zo_mean /= n
-        q = quaternion_from_euler(0, 0, zo_mean)
+        angle_mean = np.arctan2(y_angle, x_angle)
+        q = quaternion_from_euler(0, 0, angle_mean)
 
         self.robot_estimate = Pose(
-            Point(xp_mean, yp_mean, zp_mean),
+            Point(xp_mean, yp_mean, 0),
             Quaternion(q[0], q[1], q[2], q[3]))
 
     
     def update_particle_weights_with_measurement_model(self, data):
-
-        # TODO
-
+        
         """Our code starts here"""
         print("update_particle_weights_with_measurement_model")
         # The professor said that we are assigning higher weights to the particles outside the bound
         # We want to handle dist that are nan close to where to call compute_prob_zero_centered_gaussian
         cardinal_directions_idxs = [0,45,90,135,180,225,270,315]
-        z_max = 3.0 # maximum range of laser measurements
-        ranges = np.nan_to_num(data.ranges)
+        z_max = 3.5 # maximum range of laser measurements
 
         # compute the importance weights (w) for all particles
         # using the likelihood field measurement algorithm
@@ -374,22 +360,26 @@ class ParticleFilter:
 
             # for each measurement in a certain direction
             for d in cardinal_directions_idxs:
-                if ranges[d] <= z_max and ranges[d] != 0.0:
-                    # get angular.z by converting quaternion to yaw
-                    theta = get_yaw_from_pose(p.pose)
+                # convert inf and nan readings to max range
+                m = data.ranges[d]
+                if np.isfinite(m) == False:
+                    m = z_max 
+                
+                # get angular.z by converting quaternion to yaw
+                theta = get_yaw_from_pose(p.pose)
 
-                    # x_zkt = x + x_k,sens * cos(theta) - y_k,sens * sin(theta) + z_kt * cos(theta + theta_k,sens)
-                    # y_zkt = y + y_k,sens * cos(theta) - x_k,sens * sin(theta) + z_kt * sin(theta + theta_k,sens)
-                    # currently assuming x_k,sens, y_ksens, and theta_k,sens = 0 i.e. sensor at robot center
-                    x_zkt = p.pose.position.x + data.ranges[d] * np.cos(theta + d) #do we need d here?
-                    y_zkt = p.pose.position.y + data.ranges[d] * np.sin(theta + d) #do we need d here?
-                    dist = self.likelihood_field.get_closest_obstacle_distance(x_zkt, y_zkt)
-                    #handle NaN dist here 
-                    if dist == float('nan'):
-                        dist = 0.0
-                    p.weight *= compute_prob_zero_centered_gaussian(dist, 0.1)
-            
+                # x_zkt = x + x_k,sens * cos(theta) - y_k,sens * sin(theta) + z_kt * cos(theta + theta_k,sens)
+                # y_zkt = y + y_k,sens * cos(theta) - x_k,sens * sin(theta) + z_kt * sin(theta + theta_k,sens)
+                # currently assuming x_k,sens, y_ksens, and theta_k,sens = 0 i.e. sensor at robot center
+                x_zkt = p.pose.position.x + data.ranges[d] * np.cos(theta + (d * np.pi/180)) 
+                y_zkt = p.pose.position.y + data.ranges[d] * np.sin(theta + (d * np.pi/180)) 
+                dist = self.likelihood_field.get_closest_obstacle_distance(x_zkt, y_zkt)
+                
+                # handle NaN dist here 
+                if np.isfinite(dist) == False:
+                    dist = 0.0
 
+                p.weight *= compute_prob_zero_centered_gaussian(dist, 0.1)
         """Our code ends here"""
         
 
@@ -397,8 +387,6 @@ class ParticleFilter:
 
         # based on the how the robot has moved (calculated from its odometry), we'll  move
         # all of the particles correspondingly
-
-        # TODO
 
         """Our code starts here"""
         print("update_particles_with_motion_model")
@@ -436,8 +424,8 @@ class ParticleFilter:
 
             # p.pose.position.x += n_dist * np.cos(p_yaw)
             # p.pose.position.y += n_dist * np.sin(p_yaw)
-            p.pose.position.x += dist * np.cos(p_yaw) + random.gauss(0, 0.01)
-            p.pose.position.y += dist * np.sin(p_yaw) + random.gauss(0, 0.01)
+            p.pose.position.x += dist * np.cos(p_yaw) + random.gauss(0, 0.1)
+            p.pose.position.y += dist * np.sin(p_yaw) + random.gauss(0, 0.1)
 
             #p_yaw += n_rot2
             p_yaw += rot2+ random.gauss(0, 0.01)
