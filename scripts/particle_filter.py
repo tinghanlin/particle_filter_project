@@ -394,26 +394,27 @@ class ParticleFilter:
         curr_yaw = get_yaw_from_pose(self.odom_pose.pose)
         old_yaw = get_yaw_from_pose(self.odom_pose_last_motion_update.pose)
 
+        # rotate -> move straight -> rotate to final position
         x_diff = curr_x - old_x
         y_diff = curr_y - old_y
-        #I think yaw is referring to the theta of robot's location [x, y, theta]
-        #print("curr_raw: ", curr_yaw)
-        #print("old_yaw:", old_yaw)
-        yaw_diff = curr_yaw - old_yaw
+
+        dist = np.sqrt(x_diff**2 + y_diff**2) # linear distance traveled
+        rotation1 = np.arctan2(y_diff, x_diff) - old_yaw # first rotation
+        rotation2 = curr_yaw - old_yaw - rotation1 # second rotation
 
         for p in self.particle_cloud:
-            # We need to rotate cw by phi = diff btwn robot and particle orientation to adjust distance
-            phi = -get_yaw_from_pose(p.pose)
-            x_diff = np.cos(phi) * x_diff + np.sin(phi) * y_diff  # we need phi to be radian, so check it!
-            y_diff = -np.sin(phi) * x_diff + np.cos(phi) * y_diff
-            p.pose.position.x += x_diff
-            p.pose.position.y += y_diff
+            p_yaw = get_yaw_from_pose(p.pose)
+            p_yaw += rotation1
             
-            q = quaternion_from_euler(0.0, 0.0, yaw_diff) 
-            p.pose.orientation.x += q[0]
-            p.pose.orientation.y += q[1]
-            p.pose.orientation.z += q[2]
-            p.pose.orientation.w += q[3]
+            p.pose.position.x += dist * np.cos(p_yaw)
+            p.pose.position.y += dist * np.sin(p_yaw)
+
+            p_yaw += rotation2
+            q = quaternion_from_euler(0.0, 0.0, p_yaw)
+            p.pose.orientation.x = q[0]
+            p.pose.orientation.y = q[1]
+            p.pose.orientation.z = q[2]
+            p.pose.orientation.w = q[3]
 
         """Our code ends here"""
 
