@@ -34,21 +34,16 @@ def get_yaw_from_pose(p):
     return yaw
 
 
-def draw_random_sample(my_array, n, p):
+def draw_random_sample(n, p):
     """ Draws a random sample of n elements from a given list of choices and their specified probabilities.
     We recommend that you fill in this function using random_sample.
     """
-    # TODO
-    number_of_rows = my_array.shape[0]
+    # n = num_particles, p = weights
+    # get indices of particles to choose based on weights
+    #indices = np.random.choice(range(n), size = n, replace = True, p = p)
     
-    random_indices = np.random.choice(number_of_rows, size=n, replace=True, p = p)
-    print("length of indices",len(random_indices))
-    
-    random_rows = my_array[random_indices]
-    
-    return random_rows
-
-    #return np.random.choice(choices, size = n, replace = True, p = p)
+    indices = choices(range(n), weights = p, k = n)
+    return indices
 
 
 def compute_prob_zero_centered_gaussian(dist, sd):
@@ -92,7 +87,7 @@ class ParticleFilter:
         self.likelihood_field = LikelihoodField()
 
         # the number of particles used in the particle filter
-        self.num_particles = 10
+        self.num_particles = 5000
 
         # initialize the particle cloud array
         self.particle_cloud = []
@@ -101,8 +96,8 @@ class ParticleFilter:
         self.robot_estimate = Pose()
 
         # set threshold values for linear and angular movement before we preform an update
-        self.lin_mvmt_threshold = 0.05        
-        self.ang_mvmt_threshold = (np.pi / 10)
+        self.lin_mvmt_threshold = 0.2        
+        self.ang_mvmt_threshold = (np.pi / 6)
 
         self.odom_pose_last_motion_update = None
 
@@ -177,8 +172,6 @@ class ParticleFilter:
             p.orientation.w = q[3]
 
             self.particle_cloud.append(Particle(p, 1/(self.num_particles)))
-            
-        self.particle_cloud = np.array(self.particle_cloud)
         """Our code ends here"""
         
 
@@ -198,9 +191,13 @@ class ParticleFilter:
         for particle in self.particle_cloud:
             weight_sum += particle.w
 
-        for particle in self.particle_cloud:
-            particle.w /= weight_sum
+        cumulate_sum = 0.0
+        for particle in self.particle_cloud[:-1]:
+            particle.w = round(particle.w/weight_sum, 8)
+            cumulate_sum += particle.w
 
+        self.particle_cloud[-1].w = 1.0 - cumulate_sum
+        
         """Our code ends here"""
 
 
@@ -229,13 +226,23 @@ class ParticleFilter:
         # TODO
 
         """Our code starts here"""
-        # we want perform resample with replacement
+        # resample of particle cloud with replacement based on weights
         print("resample_particles")
+
+        # get list of weights
         weights = []
         for p in self.particle_cloud:
             weights.append(p.w)
+        
+        indices = draw_random_sample(self.num_particles, weights)
+        #print("indices", indices)
+        new_cloud = []
 
-        self.particle_cloud = draw_random_sample(np.array(self.particle_cloud), self.num_particles, weights)
+        for i in indices:
+            new_cloud.append(self.particle_cloud[i])
+        
+        self.particle_cloud = new_cloud
+
         """Our code ends here"""
         
     def robot_scan_received(self, data):
@@ -288,16 +295,16 @@ class ParticleFilter:
             if (np.abs(curr_x - old_x) > self.lin_mvmt_threshold or 
                 np.abs(curr_y - old_y) > self.lin_mvmt_threshold or
                 np.abs(curr_yaw - old_yaw) > self.ang_mvmt_threshold):
-                print("check point 2")
+                
                 # This is where the main logic of the particle filter is carried out
 
                 self.update_particles_with_motion_model()
 
-                #self.update_particle_weights_with_measurement_model(data)
+                self.update_particle_weights_with_measurement_model(data)
 
-                #self.normalize_particles()
+                self.normalize_particles()
 
-                #self.resample_particles()
+                self.resample_particles()
 
                 #self.update_estimated_robot_pose()
 
@@ -346,12 +353,10 @@ class ParticleFilter:
 
         """Our code starts here"""
         print("update_particle_weights_with_measurement_model")
-        # wait until initialization is complete
-        if not(self.initialized):
-            return
 
         cardinal_directions_idxs = [0,45,90,135,180,225,270,315]
-        z_max = 0 # maximum range of laser measurements
+        z_max = 3.0 # maximum range of laser measurements
+        ranges = np.nan_to_num(data.ranges)
 
         # compute the importance weights (w) for all particles
         # using the likelihood field measurement algorithm
@@ -362,7 +367,7 @@ class ParticleFilter:
 
             # for each measurement in a certain direction
             for d in cardinal_directions_idxs:
-                if data.ranges[d] != z_max:
+                if ranges[d] <= z_max and ranges[d] != 0:
                     # get angular.z by converting quaternion to yaw
                     theta = get_yaw_from_pose(p.pose)
 
@@ -372,7 +377,7 @@ class ParticleFilter:
                     x_zkt = p.pose.position.x + data.ranges[d] * np.cos(theta + d) #do we need d here?
                     y_zkt = p.pose.position.y + data.ranges[d] * np.sin(theta + d) #do we need d here?
                     dist = self.likelihood_field.get_closest_obstacle_distance(x_zkt, y_zkt)
-                    p.weight = p.weight * compute_prob_zero_centered_gaussian(dist, 0.1)
+                    p.weight *= compute_prob_zero_centered_gaussian(dist, 0.1)
             
 
         """Our code ends here"""
@@ -399,17 +404,27 @@ class ParticleFilter:
         y_diff = curr_y - old_y
 
         dist = np.sqrt(x_diff**2 + y_diff**2) # linear distance traveled
-        rotation1 = np.arctan2(y_diff, x_diff) - old_yaw # first rotation
-        rotation2 = curr_yaw - old_yaw - rotation1 # second rotation
+        rot1 = np.arctan2(y_diff, x_diff) - old_yaw # first rotation
+        rot2 = curr_yaw - old_yaw - rot1 # second rotation
+
+        # add noise to movement
+        a1 = 0.1
+        a2 = 0.01
+        a3 = 0.1
+        a4 = 0.01
+
+        n_dist = dist - np.random.normal(scale = np.sqrt(a1 * dist**2 + a2 * (rot1 + rot2)**2))
+        n_rot1 = rot1 - np.random.normal(scale = np.sqrt(a3 * rot1**2 + a4 * dist**2))
+        n_rot2 = rot2 - np.random.normal(scale = np.sqrt(a3 * rot2**2 + a4 * dist**2))
 
         for p in self.particle_cloud:
             p_yaw = get_yaw_from_pose(p.pose)
-            p_yaw += rotation1
+            p_yaw += n_rot1
             
-            p.pose.position.x += dist * np.cos(p_yaw)
-            p.pose.position.y += dist * np.sin(p_yaw)
+            p.pose.position.x += n_dist * np.cos(p_yaw)
+            p.pose.position.y += n_dist * np.sin(p_yaw)
 
-            p_yaw += rotation2
+            p_yaw += n_rot2
             q = quaternion_from_euler(0.0, 0.0, p_yaw)
             p.pose.orientation.x = q[0]
             p.pose.orientation.y = q[1]
