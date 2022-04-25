@@ -153,8 +153,8 @@ class ParticleFilter:
         indices = np.array(indices)
 
         # from row major cell indices, get x and y pose coordinates
-        x_coords = (indices % self.map.width) * self.map.info.resolution + self.map.info.origin.x
-        y_coords = (indices % self.map.height) * self.map.info.resolution + self.map.info.origin.y
+        x_coords = (indices % self.map.info.width) * self.map.info.resolution + self.map.info.origin.position.x
+        y_coords = (indices % self.map.info.height) * self.map.info.resolution + self.map.info.origin.position.y
         
         # sample x, y, and theta uniformly
         xs = np.random.choice(x_coords, size = self.num_particles)
