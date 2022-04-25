@@ -350,7 +350,7 @@ class ParticleFilter:
         if not(self.initialized):
             return
 
-        cardinal_directions_idxs = range(360)
+        cardinal_directions_idxs = [0,45,90,135,180,225,270,315]
         z_max = 0 # maximum range of laser measurements
 
         # compute the importance weights (w) for all particles
