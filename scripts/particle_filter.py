@@ -17,7 +17,7 @@ from numpy.random import random_sample
 import math
 
 from random import randint, random, choices
-
+import random
 from likelihood_field import LikelihoodField
 import time
 
@@ -42,13 +42,14 @@ def draw_random_sample(n, p):
     # get indices of particles to choose based on weights
     #indices = np.random.choice(range(n), size = n, replace = True, p = p)
     
-    indices = choices(range(n), weights = p, k = n)
+    indices = random.choices(range(n), weights = p, k = n)
     return indices
 
 
 def compute_prob_zero_centered_gaussian(dist, sd):
     """ Takes in distance from zero (dist) and standard deviation (sd) for gaussian
         and returns probability (likelihood) of observation """
+    #ww want to handle dist that nan , make it prob extremely small
     c = 1.0 / (sd * math.sqrt(2 * math.pi))
     prob = c * math.exp((-math.pow(dist,2))/(2 * math.pow(sd, 2)))
     return prob
@@ -87,7 +88,7 @@ class ParticleFilter:
         self.likelihood_field = LikelihoodField()
 
         # the number of particles used in the particle filter
-        self.num_particles = 5000
+        self.num_particles = 200
 
         # initialize the particle cloud array
         self.particle_cloud = []
@@ -191,12 +192,17 @@ class ParticleFilter:
         for particle in self.particle_cloud:
             weight_sum += particle.w
 
-        cumulate_sum = 0.0
-        for particle in self.particle_cloud[:-1]:
-            particle.w = round(particle.w/weight_sum, 8)
-            cumulate_sum += particle.w
+        
+        for particle in self.particle_cloud:
+            particle.w /= weight_sum
+            
 
-        self.particle_cloud[-1].w = 1.0 - cumulate_sum
+        # cumulate_sum = 0.0
+        # for particle in self.particle_cloud[:-1]:
+        #     particle.w = round(particle.w/weight_sum, 8)
+        #     cumulate_sum += particle.w
+
+        # self.particle_cloud[-1].w = 1.0 - cumulate_sum
         
         """Our code ends here"""
 
@@ -353,7 +359,8 @@ class ParticleFilter:
 
         """Our code starts here"""
         print("update_particle_weights_with_measurement_model")
-
+        # The professor said that we are assigning higher weights to the particles outside the bound
+        # We want to handle dist that are nan close to where to call compute_prob_zero_centered_gaussian
         cardinal_directions_idxs = [0,45,90,135,180,225,270,315]
         z_max = 3.0 # maximum range of laser measurements
         ranges = np.nan_to_num(data.ranges)
@@ -367,7 +374,7 @@ class ParticleFilter:
 
             # for each measurement in a certain direction
             for d in cardinal_directions_idxs:
-                if ranges[d] <= z_max and ranges[d] != 0:
+                if ranges[d] <= z_max and ranges[d] != 0.0:
                     # get angular.z by converting quaternion to yaw
                     theta = get_yaw_from_pose(p.pose)
 
@@ -377,6 +384,9 @@ class ParticleFilter:
                     x_zkt = p.pose.position.x + data.ranges[d] * np.cos(theta + d) #do we need d here?
                     y_zkt = p.pose.position.y + data.ranges[d] * np.sin(theta + d) #do we need d here?
                     dist = self.likelihood_field.get_closest_obstacle_distance(x_zkt, y_zkt)
+                    #handle NaN dist here 
+                    if dist == float('nan'):
+                        dist = 0.0
                     p.weight *= compute_prob_zero_centered_gaussian(dist, 0.1)
             
 
@@ -408,23 +418,30 @@ class ParticleFilter:
         rot2 = curr_yaw - old_yaw - rot1 # second rotation
 
         # add noise to movement
-        a1 = 0.1
-        a2 = 0.01
-        a3 = 0.1
-        a4 = 0.01
+        # a1 = 0.1
+        # a2 = 0.01
+        # a3 = 0.1
+        # a4 = 0.01
 
-        n_dist = dist - np.random.normal(scale = np.sqrt(a1 * dist**2 + a2 * (rot1 + rot2)**2))
-        n_rot1 = rot1 - np.random.normal(scale = np.sqrt(a3 * rot1**2 + a4 * dist**2))
-        n_rot2 = rot2 - np.random.normal(scale = np.sqrt(a3 * rot2**2 + a4 * dist**2))
+        #n_dist = dist - np.random.normal(scale = np.sqrt(a1 * dist**2 + a2 * (rot1 + rot2)**2))
+        #n_rot1 = rot1 - np.random.normal(scale = np.sqrt(a3 * rot1**2 + a4 * dist**2))
+        #n_rot2 = rot2 - np.random.normal(scale = np.sqrt(a3 * rot2**2 + a4 * dist**2))
+        
 
         for p in self.particle_cloud:
             p_yaw = get_yaw_from_pose(p.pose)
-            p_yaw += n_rot1
-            
-            p.pose.position.x += n_dist * np.cos(p_yaw)
-            p.pose.position.y += n_dist * np.sin(p_yaw)
 
-            p_yaw += n_rot2
+            #p_yaw += n_rot1
+            p_yaw += rot1
+
+            # p.pose.position.x += n_dist * np.cos(p_yaw)
+            # p.pose.position.y += n_dist * np.sin(p_yaw)
+            p.pose.position.x += dist * np.cos(p_yaw) + random.gauss(0, 0.01)
+            p.pose.position.y += dist * np.sin(p_yaw) + random.gauss(0, 0.01)
+
+            #p_yaw += n_rot2
+            p_yaw += rot2+ random.gauss(0, 0.01)
+            
             q = quaternion_from_euler(0.0, 0.0, p_yaw)
             p.pose.orientation.x = q[0]
             p.pose.orientation.y = q[1]
