@@ -24,6 +24,8 @@ During the initial stage of our project, we had difficulty visualizing the parti
 ### Future Work 
 In the future, we can think more about how to initialize the particle cloud strictly within the boundaries of the maze. In our current implementation, some of the particles are initialized a little bit outside of the wall of the maze.
 
+### GIF
+  ![Alt Text](particle-filter.GIF)
 
 ### Takeaways
 
