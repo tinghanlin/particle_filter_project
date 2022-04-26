@@ -19,7 +19,9 @@ In the particle filter localization project, our objective is to implement Monte
 #### Optimization Of Parameters
 
 ### Challenges
-During the initial stage of our project, we had difficulty visualizing the particles on rviz. It turnned out that the reason was because we didn't ensure the publishers and subscribers to be set up before we called the initialize_particle_cloud function. After we implemented sleep, we were able to see the particles shown on rviz.
+We encounter the following challenges in this project:
+* Visualize Particles: During the initial stage of our project, we had difficulty visualizing the particles on rviz. It turnned out that the reason was because we didn't ensure the publishers and subscribers to be set up before we called the initialize_particle_cloud function. After we implemented sleep, we were able to see the particles shown on rviz.
+* Python Debug: In our code, we wrongfully access a field in a Particle p by "p.weight" instead of "p.w".
 
 ### Future Work 
 In the future, we can think more about how to initialize the particle cloud strictly within the boundaries of the maze. In our current implementation, some of the particles are initialized a little bit outside of the wall of the maze.
